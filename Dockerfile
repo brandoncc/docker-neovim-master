@@ -1,22 +1,12 @@
-FROM node:14
-
-WORKDIR /usr/src
+FROM debian:stretch-slim
 
 # install build packages and neovim build dependencies
-RUN apt-get update && apt-get install -y \
-  build-essential libssl-dev snapd gperf luajit luarocks libuv1-dev \
+RUN apt-get update && apt-get install --no-install-recommends -qq \
+  build-essential gperf luajit luarocks libuv1-dev \
   libluajit-5.1-dev libunibilium-dev libmsgpack-dev libtermkey-dev \
-  libvterm-dev libutf8proc-dev
-
-# install cmake so we can compile neovim
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.16.5/cmake-3.16.5.tar.gz && \
-  tar -zxvf cmake-3.16.5.tar.gz && \
-  cd cmake-3.16.5 && \
-  ./bootstrap && \
-  make  && \
-  make install
-
-RUN apt-get install -y gettext
+  libvterm-dev libutf8proc-dev make cmake automake git gettext pkg-config \
+  libtool-bin libtool curl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
 # compile neovim
 RUN git clone https://github.com/neovim/neovim && \
@@ -24,3 +14,7 @@ RUN git clone https://github.com/neovim/neovim && \
   make CMAKE_BUILD_TYPE=RelWithDebInfo && \
   make install
 
+WORKDIR /usr/src
+
+RUN curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim \
+  --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
